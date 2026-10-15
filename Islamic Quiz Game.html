@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>இஸ்லாமிய அறிவுப் போட்டி - Islamic Quiz Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Tamil', sans-serif;
+            background: linear-gradient(135deg, #065f46 0%, #047857 50%, #064e3b 100%);
+        }
+        .option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-100 flex flex-col justify-between p-4 md:p-8">
+
+    <header class="max-w-3xl w-full mx-auto text-center py-4">
+        <h1 class="text-3xl md:text-4xl font-bold text-amber-300 drop-shadow-md">🌙 இஸ்லாமிய அறிவுப் போட்டி 🌙</h1>
+        <p class="text-slate-200 mt-2 text-sm md:text-base">உங்கள் இஸ்லாமிய அறிவைச் சோதிப்போம் (சவுண்ட் எஃபெக்ட்ஸ் & முடிவுகளுடன்!)</p>
+    </header>
+
+    <main class="max-w-2xl w-full mx-auto bg-slate-900/90 backdrop-blur-md rounded-2xl shadow-2xl p-6 md:p-8 border border-emerald-600/50 my-auto">
+        
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="text-center space-y-6">
+            <div class="bg-emerald-800/40 p-6 rounded-xl border border-emerald-500/30">
+                <h2 class="text-xl md:text-2xl font-bold text-amber-200 mb-3">அஸ்ஸலாமு அலைக்கும் வரஹ்மத்துல்லாஹி வபரகாதுஹூ!</h2>
+                <p class="text-slate-300 text-sm md:text-base leading-relaxed">
+                    இந்த விளையாட்டில் 100 கேள்விகள், ஒவ்வொரு கேள்விக்குமான 15 வினாடிகள் டைமர், சவுண்ட் எஃபெக்ட்ஸ் மற்றும் இறுதியில் உங்கள் சரியான/தவறான பதில்களின் விரிவான ரிப்போர்ட் இடம்பெற்றுள்ளது.
+                </p>
+            </div>
+            <button onclick="startQuiz()" class="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-slate-950 font-bold text-lg rounded-xl shadow-lg transition-all duration-300">
+                விளையாட்டைத் தொடங்குக (Start Quiz)
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden space-y-6">
+            <!-- Progress & Score Bar -->
+            <div class="flex justify-between items-center text-sm md:text-base font-semibold border-b border-slate-700 pb-3">
+                <span id="question-counter" class="text-amber-400">கேள்வி: 1 / 100</span>
+                <span id="score-display" class="text-emerald-400">மதிப்பெண்: 0</span>
+            </div>
+
+            <!-- Question Box -->
+            <div class="min-h-[90px] flex items-center">
+                <h3 id="question-text" class="text-lg md:text-xl font-bold text-slate-100 leading-relaxed">கேள்வி இங்கே தோன்றும்...</h3>
+            </div>
+
+            <!-- Timer Bar -->
+            <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden border border-slate-700">
+                <div id="timer-bar" class="bg-amber-400 h-2.5 rounded-full transition-all duration-1000 w-full"></div>
+            </div>
+            <div class="flex justify-between items-center text-xs text-slate-400">
+                <span>மீதமுள்ள நேரம்:</span>
+                <span id="timer-text" class="text-amber-400 font-bold">15 வினாடிகள்</span>
+            </div>
+
+            <!-- Options Container -->
+            <div id="options-container" class="grid grid-cols-1 gap-3">
+                <!-- Option buttons will be injected dynamically -->
+            </div>
+
+            <!-- Next Button -->
+            <div class="flex justify-end pt-2">
+                <button id="next-btn" onclick="nextQuestion()" class="hidden px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow transition-all duration-200">
+                    அடுத்த கேள்வி →
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden text-center space-y-6">
+            <div class="bg-emerald-800/40 p-6 md:p-8 rounded-xl border border-emerald-500/30 space-y-5">
+                <h2 class="text-2xl md:text-3xl font-bold text-amber-300">🎉 அல்ஹம்துலில்லாஹ்! போட்டி நிறைவடைந்தது!</h2>
+                
+                <p id="final-score-text" class="text-xl font-semibold text-slate-200">உங்கள் மதிப்பெண்: 0 / 100</p>
+                
+                <!-- Detailed Stats Card -->
+                <div class="grid grid-cols-2 gap-4 py-3 border-y border-emerald-600/30">
+                    <div class="bg-emerald-900/60 p-4 rounded-xl border border-emerald-500/40">
+                        <p class="text-xs md:text-sm text-emerald-300 font-medium">சரியான பதில்கள்</p>
+                        <p id="correct-count" class="text-2xl md:text-3xl font-bold text-emerald-400 mt-1">0</p>
+                    </div>
+                    <div class="bg-rose-950/60 p-4 rounded-xl border border-rose-500/40">
+                        <p class="text-xs md:text-sm text-rose-300 font-medium">தவறான / விடுபட்டவை</p>
+                        <p id="wrong-count" class="text-2xl md:text-3xl font-bold text-rose-400 mt-1">0</p>
+                    </div>
+                </div>
+
+                <p id="appraisal-text" class="text-slate-300 text-sm md:text-base leading-relaxed"></p>
+            </div>
+            <button onclick="restartQuiz()" class="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-lg rounded-xl shadow-lg transition-all duration-300">
+                மீண்டும் விளையாட 🔄
+            </button>
+        </div>
+
+    </main>
+
+    <footer class="text-center text-xs md:text-sm text-slate-400 py-2">
+        இஸ்லாமிய அறிவுப் போட்டி வெப் செயலி © 2026
+    </footer>
+
+    <script>
+        // Tone.js சவுண்ட் எஃபெக்ட்ஸ் அமைப்பு
+        let synth;
+        function initAudio() {
+            if (!synth) {
+                Tone.start();
+                synth = new Tone.Synth().toDestination();
+            }
+        }
+
+        function playCorrectSound() {
+            try {
+                initAudio();
+                const now = Tone.now();
+                synth.triggerAttackRelease("C5", "8n", now);
+                synth.triggerAttackRelease("G5", "8n", now + 0.15);
+            } catch (e) {
+                console.log("Audio not allowed yet");
+            }
+        }
+
+        function playWrongSound() {
+            try {
+                initAudio();
+                const now = Tone.now();
+                synth.triggerAttackRelease("G3", "8n", now);
+                synth.triggerAttackRelease("D3", "8n", now + 0.15);
+            } catch (e) {
+                console.log("Audio not allowed yet");
+            }
+        }
+
+        // 100 இஸ்லாமிய கேள்விகள் தரவுத்தொகுப்பு (Dataset)
+        const quizData = [
+            { q: "இஸ்லாத்தின் அடிப்படைக் தூண்கள் எத்தனை?", options: ["3", "4", "5", "6"], answer: 2 },
+            { q: "முதல் நபி யார்?", options: ["நபி முஹம்மது (ஸல்)", "நபி ஆதம் (அலை)", "நபி இப்ராஹீம் (அலை)", "நபி மூஸா (அலை)"], answer: 1 },
+            { q: "இறுதித் தூதர் யார்?", options: ["நபி ஈஸா (அலை)", "நபி நூஹ் (அலை)", "நபி முஹம்மது (ஸல்)", "நபி யூசுப் (அலை)"], answer: 2 },
+            { q: "குர்ஆன் இறக்கியருளப்பட்ட மாதம் எது?", options: ["ரஜப்", "ஷஃபான்", "ரம்ழான்", "முஹர்ரம்"], answer: 2 },
+            { q: "மக்காவில் உள்ள புனித ஆலயம் எது?", options: ["மஸ்ஜிது அக்ஸா", "கஅபா ( மஸ்ஜிதுல் ஹராம்)", "மஸ்ஜிது நபவி", "குபா பள்ளிவாசல்"], answer: 1 },
+            { q: "ஒரு நாளைக்கு எத்தனை நேரத் தொழுகைகள் கடமையாக்கப்பட்டுள்ளன?", options: ["3", "4", "5", "6"], answer: 2 },
+            { q: "குர்ஆனில் உள்ள மொத்த அத்தியாயங்களின் (சூராக்களின்) எண்ணிக்கை எவ்வளவு?", options: ["110", "114", "120", "105"], answer: 1 },
+            { q: "ஸகாத் என்பதன் பொருள் என்ன?", options: ["நோன்பு நோற்பது", "தான தர்மம் / வரி வழங்குதல்", "ஹஜ் பயணம்", "தொழுவது"], answer: 1 },
+            { q: "நபி (ஸல்) அவர்களின் தந்தை பெயர் என்ன?", options: ["அபூ தாலிப்", "அப்துல் முத்தலிப்", "அப்துல்லாஹ்", "அம்ரு"], answer: 2 },
+            { q: "நபி (ஸல்) அவர்களின் தாய் பெயர் என்ன?", options: ["ஆமினா", "கதீஜா", "பாத்திமா", "ஆயிஷா"], answer: 0 },
+            { q: "முஸ்லிம்களின் முதல் கிப்லா எது?", options: ["கஅபா", "பைத்துல் முகத்தஸ் (மஸ்ஜிது அக்ஸா)", "மஸ்ஜிது நபவி", "மஸ்ஜிது குபா"], answer: 1 },
+            { q: "இஸ்லாமிய சந்திர ஆண்டின் முதல் மாதம் எது?", options: ["ரம்ழான்", "ஸஃபர்", "முஹர்ரம்", "ரபிஉல் அவ்வல்"], answer: 2 },
+            { q: "நபி (ஸல்) அவர்கள் பிறந்த ஊர் எது?", options: ["மதீனா", "மக்கா", "ஜெருசலேம்", "தாயிப்"], answer: 1 },
+            { q: "நபி (ஸல்) அவர்கள் ஹிஜ்ரத் செய்த ஊர் எது?", options: ["மக்கா", "மதீனா", "ஜெருசலேம்", "ஜித்தா"], answer: 1 },
+            { q: "புனித குர்ஆன் எந்த மொழியில் அருளப்பட்டது?", options: ["பாரசீகம்", "அரபு", "உருது", "துருக்கி"], answer: 1 },
+            { q: "முதல் கலீஃபா (கலீஃபத்துல் முஸ்லிமீன்) யார்?", options: ["உமர் (ரலி)", "உஸ்மான் (ரலி)", "அபூ பக்ர் (ரலி)", "அலி (ரலி)"], answer: 2 },
+            { q: "நபி (ஸல்) அவர்களின் மனைவியரில் முதல் மனைவியார் யார்?", options: ["ஆயிஷா (ரலி)", "கதீஜா (ரலி)", "ஹப்ஸா (ரலி)", "ஜைனப் (ரலி)"], answer: 1 },
+            { q: "சுக்ர் என்பதன் பொருள் என்ன?", options: ["பொறுமை", "நன்றியுணர்வு", "நம்பிக்கை", "மன்னிப்பு"], answer: 1 },
+            { q: "ஸப்ர் என்பதன் பொருள் என்ன?", options: ["பொறுமை", "நன்றி", "தாவா", "தானம்"], answer: 0 },
+            { q: "ஈமான் என்பதன் பொருள் என்ன?", options: ["வணக்கம்", "நம்பிக்கை", "அன்பு", "அச்சம்"], answer: 1 },
+            { q: "சொர்க்கத்தின் திறவுகோல் எது?", options: ["நோன்பு", "தொழுகை", "ஸகாத்", "ஹஜ்"], answer: 1 },
+            { q: "மதீனா நகரின் பழைய பெயர் என்ன?", options: ["யஸ்ரிப்", "தாயிப்", "பத்ர்", "உஹத்"], answer: 0 },
+            { q: "முதல் இஸ்லாமியப் போர் எது?", options: ["ஹுனைன் போர்", "கந்தக் போர்", "பத்ருப் போர்", "உஹதுப் போர்"], answer: 2 },
+            { q: "குர்ஆனில் உள்ள மொத்த வசனங்களின் (ஆயத்துகளின்) தோராய எண்ணிக்கை?", options: ["5000", "6236", "7000", "4500"], answer: 1 },
+            { q: "நபி முஹம்மது (ஸல்) அவர்களுக்கு இறைச்செய்தி (வஹீ) கொண்டு வந்த வானவர் யார்?", options: ["மீக்காயில் (அலை)", "இஸ்ராபீல் (அலை)", "ஜிப்ரீல் (அலை)", "மலக்குல் மௌத்"], answer: 2 },
+            { q: "மழையை பெய்யச் செய்யும் பணியை கவனிக்கும் வானவர் யார்?", options: ["ஜிப்ரீல் (அலை)", "மீக்காயில் (அலை)", "மாலிக்", "ரத்வான்"], answer: 1 },
+            { q: "நரகத்தின் காப்பாளர் யார்?", options: ["மாலிக்", "ரத்வான்", "ஹாரூத்", "மாரூத்"], answer: 0 },
+            { q: "சொர்க்கத்தின் காப்பாளர் யார்?", options: ["மாலிக்", "ரத்வான்", "இஸ்ராபீல்", "முன்கர்"], answer: 1 },
+            { q: "மனிதர்களை மரணிக்கச் செய்யும் வானவர் (உயிர் எடுப்பவர்) யார்?", options: ["மாலிக்", "மலக்குல் மௌத் (அஸ்ரயீல்)", "ஜிப்ரீல்", "மீக்காயில்"], answer: 1 },
+            { q: "நம்மைப் படைத்த இறைவன் யார்?", options: ["சூரியன்", "அல்லாஹு தஆலா", "சந்திரன்", "இயற்கை"], answer: 1 },
+            { q: "கலமா ஷஹாதத் என்பது எதை உறுதிப்படுத்துகிறது?", options: ["அல்லாஹ்வைத் தவிர வேறு இறைவன் இல்லை, முஹம்மது (ஸல்) அவர்கள் அவனின் தூதர்", "தொழுகையின் சிறப்பு", "நோன்பின் முறை", "ஹஜ் கடமை"], answer: 0 },
+            { q: "குர்ஆனின் இதயம் என வர்ணிக்கப்படும் சூரா எது?", options: ["சூரா பாத்திஹா", "சூரா யாசின்", "சூரா முல்க்", "சூரா பகரா"], answer: 1 },
+            { q: "குர்ஆனின் மூன்றில் ஒரு பங்குக்கு சமமான சூரா எது?", options: ["சூரா இக்லாஸ்", "சூரா நாஸ்", "சூரா ஃபலக்", "சூரா கஹ்ஃப்"], answer: 0 },
+            { q: "வெள்ளிக்கிழமை தொழுகையின் பெயர் என்ன?", options: ["ஜமாஅத்", "ஜும்ஆ", "தாராவீஹ்", "தஹஜ்ஜுத்"], answer: 1 },
+            { q: "பெருநாள் தொழுகைகள் எத்தனை ரக்அத்கள்?", options: ["2 ரக்அத்", "4 ரக்அத்", "1 ரக்அத்", "3 ரக்அத்"], answer: 0 },
+            { q: "ரம்ழான் மாதத்தில் இரவு நேரத்தில் தொரப்படும் சிறப்புத் தொழுகை என்ன?", options: ["தர்ஹத்", "தாராவீஹ்", "வத்ர்", "இஷ்ராக்"], answer: 1 },
+            { q: "ஸஹர் உணவு எப்போது உட்கொள்ளப்படுகிறது?", options: ["சூரிய மறைவுக்குப் பின்", "அதிகாலையில் நோன்பு நோற்பதற்கு முன்", "நண்பகலில்", "மாலையில்"], answer: 1 },
+            { q: "நோன்பை முடித்துக்கொள்ளும் உணவு எது?", options: ["ஸஹர்", "இஃப்தார்", "அஸர்", "லுஹர்"], answer: 1 },
+            { q: "ஸகாத் எப்போது கடமையாகும்?", options: ["நபிவழிப் படி ஆண்டு நிறைவடைந்து செல்வம் நிசாப் அளவை அடையும் போது", "மாதந்தோறும்", "நாளுக்கு ஒருமுறை", "எப்போது வேண்டுமானாலும்"], answer: 0 },
+            { q: "ஹஜ் பயணம் எப்போது மேற்கொள்ளப்படுகிறது?", options: ["ரம்ழான் மாதம்", "துல்ஹஜ் மாதம்", "முஹர்ரம் மாதம்", "ரஜப் மாதம்"], answer: 1 },
+            { q: "நபி இப்ராஹீம் (அலை) அவர்களின் மகன்கள் யார்?", options: ["ஹூத் மற்றும் ஸாலிஹ்", "இஸ்மாயீல் மற்றும் இஸ்ஹாக்", "யூசுப் மற்றும் பெஞ்சமின்", "ைய்யூப் மற்றும் ஷுஐப்"], answer: 1 },
+            { q: "கப்பல் செய்து மக்களைப் பெருவெள்ளத்திலிருந்து காப்பாற்றிய நபி யார்?", options: ["நபி நூஹ் (அலை)", "நபி இப்ராஹீம் (அலை)", "நபி லூத் (அலை)", "நபி மூஸா (அலை)"], answer: 0 },
+            { q: "தீயில் போடப்பட்டும் காப்பாற்றப்பட்ட நபி யார்?", options: ["நபி இப்ராஹீம் (அலை)", "நபி யூசுப் (அலை)", "நபி ஈஸா (அலை)", "நபி ஸுலைமான் (அலை)"], answer: 0 },
+            { q: "மீனின் வயிற்றில் இருந்த நபி யார்?", options: ["நபி யூனுஸ் (அலை)", "நபி அய்யூப் (அலை)", "நபி மூஸா (அலை)", "நபி தாவுத் (அலை)"], answer: 0 },
+            { q: "கனவுகளை விளக்கும் திறன் பெற்ற நபி யார்?", options: ["நபி யூசுப் (அலை)", "நபி யாகூப் (அலை)", "நபி ஷித் (அலை)", "நபி இதிரிஸ் (அலை)"], answer: 0 },
+            { q: "மிகப்பெரிய செல்வந்தராகவும் அரசராகவும் திகழ்ந்த நபி யார்?", options: ["நபி ஸுலைமான் (அலை)", "நபி தாவூத் (அலை)", "நபி துல்கிஃப்ல்", "நபி இலியாஸ்"], answer: 0 },
+            { q: "இரும்பைக் கையாண்டு கவசம் செய்த நபி யார்?", options: ["நபி தாவூத் (அலை)", "நபி ஸுலைமான் (அலை)", "நபி முஹம்மது (ஸல்)", "நபி ஆதம் (அலை)"], answer: 0 },
+            { q: "தந்தை இல்லாமல் அற்புதமாகப் பிறந்த நபி யார்?", options: ["நபி ஈஸா (அலை)", "நபி யஹ்யா (அலை)", "நபி இப்ராஹீம்", "நபி லூத்"], answer: 0 },
+            { q: "தாய் தந்தை இல்லாமல் படைக்கப்பட்ட நபி யார்?", options: ["நபி ஆதம் (அலை)", "நபி ஈஸா", "நபி நூஹ்", "நபி முஹம்மது"], answer: 0 },
+            { q: "குர்ஆனில் எந்த நபியின் பெயர் அதிகமாக குறிப்பிடப்பட்டுள்ளது?", options: ["நபி மூஸா (அலை)", "நபி முஹம்மது (ஸல்)", "நபி இப்ராஹீம்", "நபி ஈஸா"], answer: 0 },
+            { q: "அல்-கஃபூஃ என்பதன் பொருள் என்ன?", options: ["மிகப்பெரிய மன்னிப்பாளர்", "மிகப்பெரிய கொடையாளி", "அறவோர்", "நீதிமான்"], answer: 0 },
+            { q: "அர்-ரஹ்மான் என்பதன் பொருள் என்ன?", options: ["அளவற்ற அருளாளன்", "நிகரற்ற அன்புடையவன்", "அனைத்தையும் பார்ப்பவன்", "அனைத்தையும் கேட்பவன்"], answer: 1 },
+            { q: "அர்-ரஹீம் என்பதன் பொருள் என்ன?", options: ["நிகரற்ற அன்புடையவன்", "அளவற்ற அருளாளன்", "காப்பாளர்", "படைப்பாளர்"], answer: 0 },
+            { q: "அல்-காலிக் என்பதன் பொருள் என்ன?", options: ["படைப்பாளர்", "காப்பாளர்", "அழிப்பவர்", "அறிபவர்"], answer: 0 },
+            { q: "இஸ்லாத்தின்படி மனிதனின் நோக்கம் என்ன?", options: ["அல்லாஹ்வை வணங்குவது", "செல்வம் சேர்ப்பது", "புகழ் பெறுவது", "மகிழ்ச்சியாக வாழ்வது"], answer: 0 },
+            { q: "மஸ்ஜிது நபவி எந்த நகரில் அமைந்துள்ளது?", options: ["மக்கா", "மதீனா", "ஜெருசலேம்", "ரியாத்"], answer: 1 },
+            { q: "மஸ்ஜிது அக்ஸா எங்குள்ளது?", options: ["பாலஸ்தீனம் (ஜெருசலேம்)", "சவூதி அரேபியா", "எகிப்து", "ஜோர்டான்"], answer: 0 },
+            { q: "நபி (ஸல்) அவர்களின் பேரன்மார்கள் யார்?", options: ["ஹசன் (ரலி) மற்றும் ஹுசைன் (ரலி)", "உமர் மற்றும் உஸ்மான்", "அபூ பக்ர் மற்றும் அலி", "ஸைத் மற்றும் பிலால்"], answer: 0 },
+            { q: "நபி (ஸல்) அவர்களின் வளர்ப்பு மகனின் பெயர் என்ன?", options: ["ஸைத் பின் ஹாரிஸா (ரலி)", "அலி பின் அபீ தாலிப்", "உசாமா பின் ஜைத்", "அப்துல்லாஹ் பின் உமர்"], answer: 0 },
+            { q: "அல்குர்ஆன் முழுமையாக அருளப்பட எவ்வளவு காலம் பிடித்தது?", options: ["23 ஆண்டுகள்", "10 ஆண்டுகள்", "40 ஆண்டுகள்", "15 ஆண்டுகள்"], answer: 0 },
+            { q: "வஹீ (இறைச்செய்தி) முதන්முதலில் எங்கு இறங்கியது?", options: ["ஹிரா குகை", "தூர் மலை", "ஸூர் குகை", "மதீனா பள்ளிவாசல்"], answer: 0 },
+            { q: "நபி (ஸல்) அவர்கள் ஹிஜ்ரத் செய்யும்போது எந்த குகையில் தங்கினார்கள்?", options: ["ஸூர் குகை", "ஹிரா குகை", "உஹத் குகை", "மதீனா குகை"], answer: 0 },
+            { q: "இஸ்லாத்தின் முதல் முஅத்தின் (பாங்கு சொல்பவர்) யார்?", options: ["பிலால் இப்னு ரபாஹ் (ரலி)", "அப்துல்லாஹ் பின் உம்மூ மக்தூம்", "அபூ ஹுரைரா", "அலி (ரலி)"], answer: 0 },
+            { q: "அதிக ஹதீஸ்களை அறிவித்த தோழர் (ஸஹாபி) யார்?", options: ["அபூ ஹுரைரா (ரலி)", "உமர் (ரலி)", "அப்துல்லாஹ் பின் அப்பாஸ்", "ஆயிஷா (ரலி)"], answer: 0 },
+            { q: "நபி (ஸல்) அவர்களின் மாமாக்களில் இஸ்லாத்தைத் தழுவியவர் யார்?", options: ["ஹம்சா (ரலி) மற்றும் அப்பாஸ் (ரலி)", "அபூ ஜஹ்ல் மற்றும் அபூ லஹப்", "அப்துல் முத்தலிப்", "அபு தாலிப்"], answer: 0 },
+            { q: "புனித கஅபாவின் திறவுகோல் எந்தக் குடும்பத்திடம் பாரம்பரியமாக உள்ளது?", options: ["பனூ ஷைபா குடும்பம்", "குறைஷி குலம்", "ஹாஷிமி குலம்", "உமையா குலம்"], answer: 0 },
+            { q: "ஸம்ஸம் கிணறு எங்குள்ளது?", options: ["மக்கா (கஅபா அருகில்)", "மதீனா", "ஜெருசலேம்", "தபூக்"], answer: 0 },
+            { q: "மஸ்ஜிது குபா எங்கு அமைந்துள்ளது?", options: ["மதீனா அருகில்", "மக்கா அருகில்", "ஜெருசலேம்", "ரியாத்"], answer: 0 },
+            { q: "இஸ்லாமிய நாட்காட்டியில் 9வது மாதம் எது?", options: ["ஷஃபான்", "ரம்ழான்", "Shawwal", "ரஜப்"], answer: 1 },
+            { q: "ஈகைத் திருநாள் என்று அழைக்கப்படும் பண்டிகை எது?", options: ["ஹஜ் பெருநாள் (பக்ரீத்)", "நோன்புப் பெருநாள் (ஈதுல் ஃபித்ர்)", "மிலாது அன்நபி", "முஹர்ரம்"], answer: 1 },
+            { q: "தியாகத் திருநாள் என்று அழைக்கப்படும் பண்டிகை எது?", options: ["ஈதுல் அழ்ஹா (பக்ரீத்)", "ஈதுல் ஃபித்ர்", "ஷப் எ பராத்", "லைலதுல் கத்ர்"], answer: 0 },
+            { q: "ஆயிரம் மாதங்களை விட சிறந்தது என்று கூறப்படும் இரவு எது?", options: ["லைலதுல் கத்ர் (கண்ணியமிக்க இரவு)", "ஷப் எ பராத் இரவு", "ஆஷூரா நாள்", "ஈத் இரவு"], answer: 0 },
+            { q: "முஹர்ரம் 10ஆம் நாள் என்னவென்று அழைக்கப்படுகிறது?", options: ["ஆஷூரா நாள்", "அரஃபா நாள்", "லைலதுல் மிஃராஜ்", "ஹிஜ்ரத் நாள்"], answer: 0 },
+            { q: "ஹஜ் பயணத்தின் மிக முக்கியமான கடமை எங்கு தங்குவதாகும்?", options: ["அரஃபா மைதானம்", "மினா", "முஸ்தலிஃபா", "ஸஃபா மர்வா"], answer: 0 },
+            { q: "ஸஃபா மற்றும் மர்வா மலைகளுக்கு இடையே ஓடிச் செய்யும் வணக்கத்தின் பெயர் என்ன?", options: ["ஸயீ", "தவாஃப்", "இஹ்ராம்", "ரமீ"], answer: 0 },
+            { q: "கஅபாவைச் சுற்றி வருவதற்கு என்ன பெயர்?", options: ["தவாஃப்", "ஸயீ", "இஹ்ராம்", "குத்பா"], answer: 0 },
+            { q: "ஹஜ் அல்லது உம்ராவுக்காக அணியும் வெள்ளை நிற ஆடை எது?", options: ["இஹ்ராம் ஆடை", "ஜுப்பா", "குர்தா", "அபாயா"], answer: 0 },
+            { q: "மினா மைதானத்தில் ஷைத்தானுக்கு எதை எறிவது ஹஜ் கிரிகைகளில் ஒன்றாகும்?", options: ["கற்கள் (ரமீ)", "மலர்கள்", "முட்கள்", "மணல்"], answer: 0 },
+            { q: "நபி (ஸல்) அவர்கள் விண்ணுலகு பயணம் சென்ற நிகழ்வு என்ன?", options: ["மிஃராஜ் மற்றும் இஸ்ரா பயணம்", "ஹிஜ்ரத் பயணம்", "மக்கா வெற்றி", "தாயிப் பயணம்"], answer: 0 },
+            { q: "குர்ஆனின் நீண்ட சூரா எது?", options: ["சூரா பகரா", "சூரா ஆல இம்ரான்", "சூரா நிஸா", "சூரா மைதா"], answer: 0 },
+            { q: "குர்ஆனின் மிகச் சிறிய சூரா எது?", options: ["சூரா கவ்ஸர்", "சூரா இக்லாஸ்", "சூரா நாஸ்", "சூரா அஸ்ர்"], answer: 0 },
+            { q: "ஆயத்துல் குர்சி குர்ஆனின் எந்த சூராவில் இடம்பெற்றுள்ளது?", options: ["சூரா பகரா", "சூரா குடும்பம்", "சூரா நஹ்ல்", "சூரா கஹ்ஃப்"], answer: 0 },
+            { q: "நபி (ஸல்) அவர்களின் மகள்களில் 'ஜன்னத்துல் பத்ல்' என்ற பட்டப்பெயர் பெற்றவர் யார்?", options: ["பாத்திமா (ரலி)", "ருக்கையா (ரலி)", "உம்மு குல்சூம் (ரலி)", "ஜைனப் (ரலி)"], answer: 0 },
+            { q: "இரண்டாம் கலீஃபா யார்?", options: ["உமர் இப்னு கத்தாப் (ரலி)", "உஸ்மான் (ரலி)", "அலி (ரலி)", "அபூ பக்ர் (ரலி)"], answer: 0 },
+            { q: "மூன்றாம் கலீஃபா யார்?", options: ["உஸ்மான் பின் அஃப்பான் (ரலி)", "அலி (ரலி)", "உமர் (ரலி)", "பிலால் (ரலி)"], answer: 0 },
+            { q: "நான்காம் கலீஃபா யார்?", options: ["அலி இப்னு அபீ தாலிப் (ரலி)", "உஸ்மான் (ரலி)", "முஆவியா (ரலி)", "ஹசன் (ரலி)"], answer: 0 },
+            { q: "நபி (ஸல்) அவர்களின் மாமா ஹம்சா (ரலி) எந்தப் போரில் ஷஹீத் ஆனார்கள்?", options: ["உஹதுப் போர்", "பத்ருப் போர்", "கந்தக் போர்", "கைபர் போர்"], answer: 0 },
+            { q: "அகழ் போர் (கந்தக் போர்) எந்த ஆண்டில் நடைபெற்றது?", options: ["ஹிஜ்ரி 5", "ஹிஜ்ரி 2", "ஹிஜ்ரி 8", "ஹிஜ்ரி 1"], answer: 0 },
+            { q: "மக்கா வெற்றி எந்த ஆண்டு நிகழ்ந்தது?", options: ["ஹிஜ்ரி 8", "ஹிஜ்ரி 2", "ஹிஜ்ரி 10", "ஹிஜ்ரி 5"], answer: 0 },
+            { q: "நபி (ஸல்) அவர்களின் இறுதி ஹஜ் பயணம் நிகழ்ந்த ஆண்டு எது?", options: ["ஹிஜ்ரி 10", "ஹிஜ்ரி 8", "ஹிஜ்ரி 1", "ஹிஜ்ரி 12"], answer: 0 },
+            { q: "இஸ்லாமிய நம்பிக்கையின்படி மலாக்குகளைப் (வானவர்களைப்) படைத்தது எதிலிருந்து?", options: ["ஒளியிலிருந்து", "நெருப்பிலிருந்து", "மண்ணிலிருந்து", "நீரிலிருந்து"], answer: 0 },
+            { q: "ஜின்களைப் படைத்தது எதிலிருந்து?", options: ["புகையற்ற நெருப்பிலிருந்து", "ஒளியிலிருந்து", "மண்ணிலிருந்து", "காற்றிலிருந்து"], answer: 0 },
+            { q: "மனிதர்களைப் படைத்தது எதிலிருந்து?", options: ["களிமண்ணிலிருந்து", "நெருப்பிலிருந்து", "ஒளியிலிருந்து", "மரத்திலிருந்து"], answer: 0 },
+            { q: "மறுமை நாளில் தீர்ப்பளிக்கப்படும் நாள் எவ்வாறு அழைக்கப்படுகிறது?", options: ["யௌமுல் கியாமத் (தீர்ப்பு நாள்)", "மௌத் நாள்", "துன்யா நாள்", "பர்சத் நாள்"], answer: 0 },
+            { q: "மரணத்திற்குப் பின் மறுமை நாள் வரை மனிதர்களின் ஆன்மா தங்கும் இடைவெளி உலகம் எது?", options: ["பர்சத்", "ஜன்னத்", "ஜஹன்னம்", "அஃராப்"], answer: 0 },
+            { q: "நபி (ஸல்) அவர்களின் ஹதீஸ்களை பதிவு செய்த மிக முக்கியமான இரண்டு கிரந்தங்கள் எவை?", options: ["ஸஹீஹ் புகாரி மற்றும் ஸஹீஹ் முஸ்லிம்", "தப்ஸீர் மற்றும் ஃபிக்ஹ்", "தவ்ராத் மற்றும் இன்ஜீல்", "ஸபூர் மற்றும் ஜபூர்"], answer: 0 },
+            { q: "அல்லாஹ்வின் தூதருக்கு முன் இறக்கப்பட்ட வேதங்களில் மூஸா (அலை) அவர்களுக்கு வழங்கப்பட்ட வேதம் எது?", options: ["தவ்ராத்", "இன்ஜீல்", "ஸபூர்", "குர்ஆன்"], answer: 0 },
+            { q: "ஈஸா (அலை) அவர்களுக்கு வழங்கப்பட்ட வேதம் எது?", options: ["இன்ஜீல்", "தவ்ராத்", "ஸபூர்", "குர்ஆன்"], answer: 0 },
+            { q: "தாவுத் (அலை) அவர்களுக்கு வழங்கப்பட்ட வேதம் எது?", options: ["ஸபூர்", "தவ்ராத்", "இன்ஜீல்", "குர்ஆன்"], answer: 0 },
+            { q: "இப்ராஹீம் (அலை) அவர்களுக்கு வழங்கப்பட்ட ஏடுகள் எவ்வாறு அழைக்கப்படுகின்றன?", options: ["ஸுஹுஃப்", "தவ்ராத்", "இன்ஜீல்", "ஸபூர்"], answer: 0 },
+            { q: "இஸ்லாத்தில் முதல் பெண் ஷஹீத் (தியாகி) யார்?", options: ["ஸுமையா (ரலி)", "சுமையா", "பாத்திமா", "கதீஜா"], answer: 0 }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answered = false;
+        let timerInterval;
+        let timeLeft = 15;
+
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const questionCounter = document.getElementById('question-counter');
+        const scoreDisplay = document.getElementById('score-display');
+        const questionText = document.getElementById('question-text');
+        const timerBar = document.getElementById('timer-bar');
+        const timerText = document.getElementById('timer-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const finalScoreText = document.getElementById('final-score-text');
+        const correctCountEl = document.getElementById('correct-count');
+        const wrongCountEl = document.getElementById('wrong-count');
+        const appraisalText = document.getElementById('appraisal-text');
+
+        function startQuiz() {
+            initAudio();
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            currentQuestionIndex = 0;
+            score = 0;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            answered = false;
+            nextBtn.classList.add('hidden');
+            clearInterval(timerInterval);
+            timeLeft = 15;
+            updateTimerDisplay();
+            startTimer();
+            
+            const currentQ = quizData[currentQuestionIndex];
+            questionCounter.textContent = `கேள்வி: ${currentQuestionIndex + 1} / ${quizData.length}`;
+            scoreDisplay.textContent = `மதிப்பெண்: ${score}`;
+            questionText.textContent = currentQ.q;
+
+            optionsContainer.innerHTML = '';
+            currentQ.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn w-full text-left p-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-100 font-medium transition-all duration-200 flex items-center justify-between';
+                btn.innerHTML = `<span>${option}</span> <span class="text-xs text-slate-400 font-bold px-2 py-1 bg-slate-900 rounded">${['அ', 'ஆ', 'இ', 'ஈ'][index]}</span>`;
+                btn.onclick = () => selectOption(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    autoSkipQuestion();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            timerText.textContent = `${timeLeft} வினாடிகள்`;
+            const percentage = (timeLeft / 15) * 100;
+            timerBar.style.width = `${percentage}%`;
+        }
+
+        function autoSkipQuestion() {
+            if (answered) return;
+            answered = true;
+            playWrongSound();
+
+            const currentQ = quizData[currentQuestionIndex];
+            const optionButtons = optionsContainer.children;
+
+            const correctBtn = optionButtons[currentQ.answer];
+            correctBtn.classList.remove('bg-slate-800', 'hover:bg-slate-700', 'border-slate-700');
+            correctBtn.classList.add('bg-amber-600', 'border-amber-500', 'text-white');
+
+            for (let btn of optionButtons) {
+                btn.style.pointerEvents = 'none';
+            }
+
+            setTimeout(() => {
+                nextQuestion();
+            }, 1500);
+        }
+
+        function selectOption(selectedIndex, selectedBtn) {
+            if (answered) return;
+            answered = true;
+            clearInterval(timerInterval);
+
+            const currentQ = quizData[currentQuestionIndex];
+            const optionButtons = optionsContainer.children;
+
+            if (selectedIndex === currentQ.answer) {
+                playCorrectSound();
+                selectedBtn.classList.remove('bg-slate-800', 'hover:bg-slate-700', 'border-slate-700');
+                selectedBtn.classList.add('bg-emerald-600', 'border-emerald-500', 'text-white', 'shadow-lg');
+                score++;
+                scoreDisplay.textContent = `மதிப்பெண்: ${score}`;
+            } else {
+                playWrongSound();
+                selectedBtn.classList.remove('bg-slate-800', 'hover:bg-slate-700', 'border-slate-700');
+                selectedBtn.classList.add('bg-rose-600', 'border-rose-500', 'text-white');
+                
+                const correctBtn = optionButtons[currentQ.answer];
+                correctBtn.classList.remove('bg-slate-800', 'hover:bg-slate-700', 'border-slate-700');
+                correctBtn.classList.add('bg-emerald-600', 'border-emerald-500', 'text-white');
+            }
+
+            for (let btn of optionButtons) {
+                btn.style.pointerEvents = 'none';
+            }
+
+            setTimeout(() => {
+                nextQuestion();
+            }, 1500);
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            clearInterval(timerInterval);
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            
+            finalScoreText.textContent = `உங்கள் மதிப்பெண்: ${score} / ${quizData.length}`;
+            correctCountEl.textContent = score;
+            wrongCountEl.textContent = quizData.length - score;
+
+            let appraisal = "";
+            const percentage = (score / quizData.length) * 100;
+            if (percentage >= 80) {
+                appraisal = "மாஷா அல்லாஹ்! உங்கள் இஸ்லாமிய அறிவு மிகவும் அற்புதம். தொடர்ந்து மேலும் பல விஷயங்களைக் கற்றுக்கொள்ளுங்கள்!";
+            } else if (percentage >= 50) {
+                appraisal = "அல்ஹம்துலில்லாஹ்! நல்ல முயற்சி. இன்னும் கொஞ்சம் குர்ஆன் மற்றும் ஹதீஸ்களைப் படித்தால் இன்னும் சிறந்து விளங்கலாம்.";
+            } else {
+                appraisal = "பரவாயில்லை நண்பா, இஸ்லாமிய வரலாற்றையும் மார்க்க அறிவையும் இன்னும் ஆழமாகப் படிக்க இது ஒரு நல்ல தொடக்கம்!";
+            }
+            appraisalText.textContent = appraisal;
+        }
+
+        function restartQuiz() {
+            resultScreen.classList.add('hidden');
+            welcomeScreen.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
